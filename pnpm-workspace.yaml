@@ -1,0 +1,11 @@
+packages:
+  - "apps/*"
+  - "services/*"
+  - "packages/*"
+allowBuilds:
+  '@prisma/engines': true
+  esbuild: true
+  msgpackr-extract: true
+  prisma: false
+  unrs-resolver: false
+  workerd: true
