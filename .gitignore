@@ -35,3 +35,5 @@ Thumbs.db
 .cursor/
 .devin/
 skills-lock.json
+
+*.tsbuildinfo

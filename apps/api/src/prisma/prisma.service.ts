@@ -3,7 +3,7 @@ import { prisma } from 'database';
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
-  readonly client = prisma;
+  readonly client: typeof prisma = prisma;
 
   async onModuleInit() {
     await this.client.$connect();
