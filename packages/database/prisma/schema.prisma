@@ -32,6 +32,7 @@ model User {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   applications Application[]
+  resume       Resume?
 }
 
 model Application {
@@ -51,4 +52,14 @@ model Application {
   updatedAt   DateTime          @updatedAt
 
   @@index([userId])
+}
+
+model Resume {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rawText   String
+  skills    String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
