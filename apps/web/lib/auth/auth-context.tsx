@@ -32,17 +32,18 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function hasStoredToken(): boolean {
+  if (typeof window === "undefined") return false;
+  return !!localStorage.getItem("token");
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(hasStoredToken);
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    if (!hasStoredToken()) return;
 
     api
       .get<{ userId: string; email: string; role: string }>("/auth/me")

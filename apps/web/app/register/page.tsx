@@ -29,7 +29,7 @@ export default function RegisterPage() {
     <main className="flex-1 flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <h1 className="font-display text-3xl mb-1">Start tracking</h1>
-        <p className="text-ink-soft mb-8">A few seconds, then you're in.</p>
+        <p className="text-ink-soft mb-8">A few seconds, then you&apos;re in.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
