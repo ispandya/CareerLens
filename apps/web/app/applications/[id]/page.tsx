@@ -21,6 +21,13 @@ interface Application {
   notes: string | null;
 }
 
+interface Interview {
+  id: string;
+  round: string;
+  scheduledAt: string | null;
+  notes: string | null;
+}
+
 export default function ApplicationDetailPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -37,6 +44,13 @@ export default function ApplicationDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [fetching, setFetching] = useState(true);
+
+  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [round, setRound] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [interviewNotes, setInterviewNotes] = useState("");
+  const [addingInterview, setAddingInterview] = useState(false);
+  const [interviewError, setInterviewError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
@@ -57,6 +71,19 @@ export default function ApplicationDetailPage() {
       })
       .catch(() => setError("Couldn't load this application."))
       .finally(() => setFetching(false));
+  }, [user, id]);
+
+  function loadInterviews() {
+    api
+      .get<Interview[]>(`/applications/${id}/interviews`)
+      .then(setInterviews)
+      .catch(() => {});
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    loadInterviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, id]);
 
   async function handleSave(e: FormEvent) {
@@ -87,6 +114,36 @@ export default function ApplicationDetailPage() {
     }
   }
 
+  async function handleAddInterview(e: FormEvent) {
+    e.preventDefault();
+    setInterviewError(null);
+    setAddingInterview(true);
+    try {
+      await api.post(`/applications/${id}/interviews`, {
+        round,
+        scheduledAt: scheduledAt || undefined,
+        notes: interviewNotes || undefined,
+      });
+      setRound("");
+      setScheduledAt("");
+      setInterviewNotes("");
+      loadInterviews();
+    } catch (err) {
+      setInterviewError(err instanceof ApiError ? err.message : "Couldn't add interview round.");
+    } finally {
+      setAddingInterview(false);
+    }
+  }
+
+  async function handleDeleteInterview(interviewId: string) {
+    try {
+      await api.delete(`/interviews/${interviewId}`);
+      loadInterviews();
+    } catch {
+      setInterviewError("Couldn't delete this round.");
+    }
+  }
+
   if (loading || !user || fetching) {
     return <div className="flex-1 flex items-center justify-center text-ink-soft">Loading...</div>;
   }
@@ -113,7 +170,7 @@ export default function ApplicationDetailPage() {
           </button>
         </div>
 
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-4 mb-12">
           <div>
             <label className="block text-sm mb-1.5">Company</label>
             <input
@@ -187,6 +244,79 @@ export default function ApplicationDetailPage() {
             {saving ? "Saving..." : "Save changes"}
           </button>
         </form>
+
+        <section>
+          <h2 className="font-display text-xl mb-4">Interview rounds</h2>
+
+          {interviews.length > 0 && (
+            <ul className="space-y-2 mb-6">
+              {interviews.map((iv) => (
+                <li key={iv.id} className="border border-line rounded-md px-4 py-3 flex items-start justify-between">
+                  <div>
+                    <p className="font-medium">{iv.round}</p>
+                    {iv.scheduledAt && (
+                      <p className="text-sm text-ink-soft">
+                        {new Date(iv.scheduledAt).toLocaleString()}
+                      </p>
+                    )}
+                    {iv.notes && <p className="text-sm text-ink-soft mt-1">{iv.notes}</p>}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteInterview(iv.id)}
+                    className="text-warn text-xs underline shrink-0 ml-4"
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <form onSubmit={handleAddInterview} className="space-y-3">
+            <div>
+              <label className="block text-sm mb-1.5">Round name</label>
+              <input
+                required
+                placeholder="e.g. Phone Screen, Onsite, Final Round"
+                value={round}
+                onChange={(e) => setRound(e.target.value)}
+                className="w-full rounded-md border border-line bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1.5">Scheduled date (optional)</label>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                className="w-full rounded-md border border-line bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1.5">Notes (optional)</label>
+              <textarea
+                value={interviewNotes}
+                onChange={(e) => setInterviewNotes(e.target.value)}
+                rows={2}
+                className="w-full rounded-md border border-line bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              />
+            </div>
+
+            {interviewError && (
+              <p className="text-warn text-sm bg-warn-soft rounded-md px-3 py-2">{interviewError}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={addingInterview}
+              className="bg-accent text-white rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+            >
+              {addingInterview ? "Adding..." : "Add round"}
+            </button>
+          </form>
+        </section>
       </main>
     </>
   );
