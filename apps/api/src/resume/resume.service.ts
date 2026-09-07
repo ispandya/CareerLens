@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Resume } from 'database';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { AiService } from '../ai/ai.service.js';
 import { extractSkills } from './data/extract-skills.js';
 
 export interface JobAnalysisResult {
@@ -12,10 +13,22 @@ export interface JobAnalysisResult {
 
 @Injectable()
 export class ResumeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiService: AiService,
+  ) {}
 
   async upload(userId: string, text: string): Promise<Resume> {
-    const skills = extractSkills(text);
+    const keywordSkills = extractSkills(text);
+
+    let aiSkills: string[] = [];
+    try {
+      aiSkills = await this.aiService.extractSkillsWithAI(text);
+    } catch {
+      // AI extraction is a nice-to-have enhancement; fall back to keyword-only if it fails
+    }
+
+    const skills = Array.from(new Set([...keywordSkills, ...aiSkills]));
 
     return this.prisma.client.resume.upsert({
       where: { userId },
