@@ -18,6 +18,19 @@ interface JobAnalysis {
   jobSkills: string[];
 }
 
+interface ResumeCritique {
+  overallImpression: string;
+  strengths: string[];
+  weaknesses: string[];
+  suggestions: string[];
+}
+
+interface InterviewPrep {
+  technicalTopics: string[];
+  technicalQuestions: string[];
+  behavioralQuestions: string[];
+}
+
 export default function ResumePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -31,6 +44,14 @@ export default function ResumePage() {
   const [analysis, setAnalysis] = useState<JobAnalysis | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+
+  const [critique, setCritique] = useState<ResumeCritique | null>(null);
+  const [critiquing, setCritiquing] = useState(false);
+  const [critiqueError, setCritiqueError] = useState<string | null>(null);
+
+  const [prep, setPrep] = useState<InterviewPrep | null>(null);
+  const [prepping, setPrepping] = useState(false);
+  const [prepError, setPrepError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
@@ -76,6 +97,37 @@ export default function ResumePage() {
     }
   }
 
+  async function handleGetFeedback() {
+    setCritiqueError(null);
+    setCritiquing(true);
+    setCritique(null);
+    try {
+      const data = await api.post<ResumeCritique>("/ai/resume-feedback", { resumeText });
+      setCritique(data);
+    } catch (err) {
+      setCritiqueError(err instanceof ApiError ? err.message : "Couldn't get AI feedback.");
+    } finally {
+      setCritiquing(false);
+    }
+  }
+
+  async function handleInterviewPrep() {
+    setPrepError(null);
+    setPrepping(true);
+    setPrep(null);
+    try {
+      const data = await api.post<InterviewPrep>("/ai/interview-prep", {
+        jobDescription,
+        resumeText,
+      });
+      setPrep(data);
+    } catch (err) {
+      setPrepError(err instanceof ApiError ? err.message : "Couldn't generate interview prep.");
+    } finally {
+      setPrepping(false);
+    }
+  }
+
   if (loading || !user) {
     return <div className="flex-1 flex items-center justify-center text-ink-soft">Loading...</div>;
   }
@@ -99,13 +151,23 @@ export default function ResumePage() {
             {resumeError && (
               <p className="text-warn text-sm bg-warn-soft rounded-md px-3 py-2">{resumeError}</p>
             )}
-            <button
-              type="submit"
-              disabled={savingResume || resumeText.trim().length < 20}
-              className="bg-accent text-white rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
-            >
-              {savingResume ? "Saving..." : "Save resume"}
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={savingResume || resumeText.trim().length < 20}
+                className="bg-accent text-white rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+              >
+                {savingResume ? "Saving..." : "Save resume"}
+              </button>
+              <button
+                type="button"
+                onClick={handleGetFeedback}
+                disabled={critiquing || resumeText.trim().length < 20}
+                className="border border-accent text-accent rounded-md px-4 py-2 text-sm font-medium hover:bg-accent-soft disabled:opacity-50"
+              >
+                {critiquing ? "Thinking..." : "Get AI feedback"}
+              </button>
+            </div>
           </form>
 
           {skills.length > 0 && (
@@ -118,6 +180,43 @@ export default function ResumePage() {
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {critiqueError && (
+            <p className="text-warn text-sm bg-warn-soft rounded-md px-3 py-2 mt-4">{critiqueError}</p>
+          )}
+
+          {critique && (
+            <div className="mt-6 border border-line rounded-md p-6 space-y-4">
+              <div>
+                <p className="text-sm text-ink-soft mb-1">Overall</p>
+                <p>{critique.overallImpression}</p>
+              </div>
+              {critique.strengths.length > 0 && (
+                <div>
+                  <p className="text-sm text-ink-soft mb-1">Strengths</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {critique.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                  </ul>
+                </div>
+              )}
+              {critique.weaknesses.length > 0 && (
+                <div>
+                  <p className="text-sm text-ink-soft mb-1">Weaknesses</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {critique.weaknesses.map((s, i) => <li key={i}>{s}</li>)}
+                  </ul>
+                </div>
+              )}
+              {critique.suggestions.length > 0 && (
+                <div>
+                  <p className="text-sm text-ink-soft mb-1">Suggestions</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {critique.suggestions.map((s, i) => <li key={i}>{s}</li>)}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -135,13 +234,23 @@ export default function ResumePage() {
             {analyzeError && (
               <p className="text-warn text-sm bg-warn-soft rounded-md px-3 py-2">{analyzeError}</p>
             )}
-            <button
-              type="submit"
-              disabled={analyzing || jobDescription.trim().length < 20}
-              className="bg-accent text-white rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
-            >
-              {analyzing ? "Analyzing..." : "Analyze match"}
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={analyzing || jobDescription.trim().length < 20}
+                className="bg-accent text-white rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+              >
+                {analyzing ? "Analyzing..." : "Analyze match"}
+              </button>
+              <button
+                type="button"
+                onClick={handleInterviewPrep}
+                disabled={prepping || jobDescription.trim().length < 20 || resumeText.trim().length < 20}
+                className="border border-accent text-accent rounded-md px-4 py-2 text-sm font-medium hover:bg-accent-soft disabled:opacity-50"
+              >
+                {prepping ? "Thinking..." : "Generate interview prep"}
+              </button>
+            </div>
           </form>
 
           {analysis && (
@@ -174,6 +283,37 @@ export default function ResumePage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {prepError && (
+            <p className="text-warn text-sm bg-warn-soft rounded-md px-3 py-2 mt-4">{prepError}</p>
+          )}
+
+          {prep && (
+            <div className="mt-6 border border-line rounded-md p-6 space-y-4">
+              <div>
+                <p className="text-sm text-ink-soft mb-2">Topics to review</p>
+                <div className="flex flex-wrap gap-2">
+                  {prep.technicalTopics.map((t, i) => (
+                    <span key={i} className="text-xs bg-accent-soft text-accent rounded-full px-2.5 py-1">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-ink-soft mb-1">Technical questions</p>
+                <ul className="list-disc list-inside space-y-1">
+                  {prep.technicalQuestions.map((q, i) => <li key={i}>{q}</li>)}
+                </ul>
+              </div>
+              <div>
+                <p className="text-sm text-ink-soft mb-1">Behavioral questions</p>
+                <ul className="list-disc list-inside space-y-1">
+                  {prep.behavioralQuestions.map((q, i) => <li key={i}>{q}</li>)}
+                </ul>
+              </div>
             </div>
           )}
         </section>
