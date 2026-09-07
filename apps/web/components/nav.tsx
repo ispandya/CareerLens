@@ -12,7 +12,10 @@ export function Nav() {
         CareerLens
       </Link>
       {user && (
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-6 text-sm">
+          <Link href="/analytics" className="text-ink-soft hover:text-ink">
+            Analytics
+          </Link>
           <span className="text-ink-soft">{user.email}</span>
           <button onClick={logout} className="text-accent underline">
             Sign out
