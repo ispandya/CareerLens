@@ -8,6 +8,7 @@ import { ResumeModule } from './resume/resume.module.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
 import { AiModule } from './ai/ai.module.js';
 import { InterviewsModule } from './interviews/interviews.module.js';
+import { AdminModule } from './admin/admin.module.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { InterviewsModule } from './interviews/interviews.module.js';
     AnalyticsModule,
     AiModule,
     InterviewsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
