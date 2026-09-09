@@ -16,6 +16,13 @@ interface Application {
   createdAt: string;
 }
 
+interface Notification {
+  id: string;
+  type: string;
+  message: string;
+  relatedApplicationId: string;
+}
+
 const STATUS_LABELS: Record<string, string> = {
   SAVED: "Saved",
   APPLIED: "Applied",
@@ -39,6 +46,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -52,6 +60,11 @@ export default function DashboardPage() {
       .get<Application[]>("/applications")
       .then(setApplications)
       .finally(() => setLoadingApps(false));
+
+    api
+      .get<Notification[]>("/notifications")
+      .then(setNotifications)
+      .catch(() => {});
   }, [user]);
 
   if (loading || !user) {
@@ -62,6 +75,20 @@ export default function DashboardPage() {
     <>
       <Nav />
       <main className="flex-1 px-6 py-10 max-w-3xl mx-auto w-full">
+        {notifications.length > 0 && (
+          <div className="mb-8 space-y-2">
+            {notifications.map((n) => (
+              <Link
+                key={n.id}
+                href={`/applications/${n.relatedApplicationId}`}
+                className="block border border-accent/30 bg-accent-soft text-accent rounded-md px-4 py-3 text-sm hover:opacity-90"
+              >
+                {n.message}
+              </Link>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-8">
           <h1 className="font-display text-3xl">Your applications</h1>
           <Link

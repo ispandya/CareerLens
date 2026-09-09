@@ -19,6 +19,11 @@ export function Nav() {
           <Link href="/analytics" className="text-ink-soft hover:text-ink">
             Analytics
           </Link>
+          {user.role === "ADMIN" && (
+            <Link href="/admin" className="text-ink-soft hover:text-ink">
+              Admin
+            </Link>
+          )}
           <span className="text-ink-soft">{user.email}</span>
           <button onClick={logout} className="text-accent underline">
             Sign out
