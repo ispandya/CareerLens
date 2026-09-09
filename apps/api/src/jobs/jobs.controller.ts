@@ -14,6 +14,6 @@ export class JobsController {
     @CurrentUser() user: { userId: string },
     @Query() query: SearchJobsDto,
   ): Promise<JobResult[]> {
-    return this.jobsService.search(user.userId, query.what, query.where);
+    return this.jobsService.search(user.userId, query.what, query.where, query.country);
   }
 }

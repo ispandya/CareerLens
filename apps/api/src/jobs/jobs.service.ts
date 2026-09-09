@@ -31,11 +31,18 @@ interface AdzunaResponse {
   results: AdzunaJob[];
 }
 
+const DEFAULT_COUNTRY = 'ca';
+
 @Injectable()
 export class JobsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async search(userId: string, what: string, where?: string): Promise<JobResult[]> {
+  async search(
+    userId: string,
+    what: string,
+    where?: string,
+    country: string = DEFAULT_COUNTRY,
+  ): Promise<JobResult[]> {
     const appId = process.env.ADZUNA_APP_ID;
     const appKey = process.env.ADZUNA_APP_KEY;
 
@@ -51,7 +58,7 @@ export class JobsService {
       params.set('where', where);
     }
 
-    const url = `https://api.adzuna.com/v1/api/jobs/us/search/1?${params.toString()}`;
+    const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/1?${params.toString()}`;
 
     const response = await fetch(url);
 
@@ -69,9 +76,6 @@ export class JobsService {
       const matchedSkills = jobSkills.filter((s) => resumeSkills.has(s.toLowerCase()));
       const missingSkills = jobSkills.filter((s) => !resumeSkills.has(s.toLowerCase()));
 
-      // Adzuna only returns a truncated snippet of the full job description, so a
-      // job with zero detected skills likely just has an uninformative snippet,
-      // not an actual mismatch. Report null rather than a misleading 0% in that case.
       const matchScore = jobSkills.length === 0
         ? null
         : Math.round((matchedSkills.length / jobSkills.length) * 100);

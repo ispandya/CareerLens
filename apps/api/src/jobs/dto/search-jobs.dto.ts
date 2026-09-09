@@ -8,4 +8,8 @@ export class SearchJobsDto {
   @IsOptional()
   @IsString()
   where?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
 }
