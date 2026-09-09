@@ -10,6 +10,7 @@ import { AiModule } from './ai/ai.module.js';
 import { InterviewsModule } from './interviews/interviews.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { JobsModule } from './jobs/jobs.module.js';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
     InterviewsModule,
     AdminModule,
     NotificationsModule,
+    JobsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
