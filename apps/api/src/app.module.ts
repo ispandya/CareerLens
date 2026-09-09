@@ -9,6 +9,7 @@ import { AnalyticsModule } from './analytics/analytics.module.js';
 import { AiModule } from './ai/ai.module.js';
 import { InterviewsModule } from './interviews/interviews.module.js';
 import { AdminModule } from './admin/admin.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AdminModule } from './admin/admin.module.js';
     AiModule,
     InterviewsModule,
     AdminModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
