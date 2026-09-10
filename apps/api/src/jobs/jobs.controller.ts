@@ -16,4 +16,12 @@ export class JobsController {
   ): Promise<JobResult[]> {
     return this.jobsService.search(user.userId, query.what, query.where, query.country);
   }
+
+  @Get('recommendations')
+  getRecommendations(
+    @CurrentUser() user: { userId: string },
+    @Query('where') where?: string,
+  ): Promise<JobResult[]> {
+    return this.jobsService.getRecommendations(user.userId, where);
+  }
 }
