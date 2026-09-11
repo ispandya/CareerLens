@@ -16,11 +16,21 @@ interface Application {
   createdAt: string;
 }
 
-interface Notification {
+interface NotificationItem {
   id: string;
   type: string;
   message: string;
   relatedApplicationId: string;
+}
+
+interface JobResult {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  redirectUrl: string;
+  matchScore: number | null;
+  matchedSkills: string[];
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -46,7 +56,10 @@ export default function DashboardPage() {
   const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [recommendations, setRecommendations] = useState<JobResult[]>([]);
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!loading && !user) {
@@ -62,10 +75,33 @@ export default function DashboardPage() {
       .finally(() => setLoadingApps(false));
 
     api
-      .get<Notification[]>("/notifications")
+      .get<NotificationItem[]>("/notifications")
       .then(setNotifications)
       .catch(() => {});
+
+    api
+      .get<JobResult[]>("/jobs/recommendations")
+      .then(setRecommendations)
+      .catch(() => {});
   }, [user]);
+
+  async function handleAddToTracker(job: JobResult) {
+    setAddingId(job.id);
+    try {
+      await api.post("/applications", {
+        company: job.company,
+        role: job.title,
+        location: job.location,
+        jobUrl: job.redirectUrl,
+        status: "SAVED",
+      });
+      setAddedIds((prev) => new Set(prev).add(job.id));
+    } catch {
+      // non-fatal
+    } finally {
+      setAddingId(null);
+    }
+  }
 
   if (loading || !user) {
     return <div className="flex-1 flex items-center justify-center text-ink-soft">Loading...</div>;
@@ -111,7 +147,7 @@ export default function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2 mb-12">
             {applications.map((app) => (
               <li key={app.id}>
                 <Link
@@ -129,6 +165,50 @@ export default function DashboardPage() {
               </li>
             ))}
           </ul>
+        )}
+
+        {recommendations.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-xl">Recommended for you</h2>
+              <Link href="/jobs" className="text-sm text-accent underline">
+                Search more
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {recommendations.map((job) => (
+                <div
+                  key={job.id}
+                  className="border border-line rounded-md px-4 py-3 flex items-center justify-between gap-4"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{job.title}</p>
+                    <p className="text-sm text-ink-soft truncate">
+                      {job.company} &middot; {job.location}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {job.matchScore !== null && (
+                      <span className="text-xs bg-accent-soft text-accent rounded-full px-2.5 py-1">
+                        {job.matchScore}% match
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleAddToTracker(job)}
+                      disabled={addingId === job.id || addedIds.has(job.id)}
+                      className="text-sm text-ink-soft hover:text-ink disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {addedIds.has(job.id)
+                        ? "Added"
+                        : addingId === job.id
+                          ? "Adding..."
+                          : "+ Add"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
       </main>
     </>
