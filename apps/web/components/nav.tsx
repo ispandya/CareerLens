@@ -16,6 +16,9 @@ export function Nav() {
           <Link href="/jobs" className="text-ink-soft hover:text-ink">
             Find jobs
           </Link>
+          <Link href="/companies" className="text-ink-soft hover:text-ink">
+            Companies
+          </Link>
           <Link href="/resume" className="text-ink-soft hover:text-ink">
             Resume
           </Link>
