@@ -11,6 +11,7 @@ import { InterviewsModule } from './interviews/interviews.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { JobsModule } from './jobs/jobs.module.js';
+import { CompaniesModule } from './companies/companies.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { JobsModule } from './jobs/jobs.module.js';
     AdminModule,
     NotificationsModule,
     JobsModule,
+    CompaniesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
