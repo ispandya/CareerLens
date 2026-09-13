@@ -48,6 +48,28 @@ async function request<T>(
   return res.json();
 }
 
+async function requestFile<T>(path: string, formData: FormData): Promise<T> {
+  const token = getToken();
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    body: formData,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const message = Array.isArray(body.message)
+      ? body.message.join(", ")
+      : body.message ?? "Something went wrong";
+    throw new ApiError(res.status, message);
+  }
+
+  return res.json();
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, data?: unknown) =>
@@ -55,4 +77,5 @@ export const api = {
   patch: <T>(path: string, data?: unknown) =>
     request<T>(path, { method: "PATCH", body: data ? JSON.stringify(data) : undefined }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  postFile: <T>(path: string, formData: FormData) => requestFile<T>(path, formData),
 };

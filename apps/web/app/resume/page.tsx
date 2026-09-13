@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, ApiError } from "../../lib/auth/auth-context";
 import { api } from "../../lib/api";
@@ -39,6 +39,9 @@ export default function ResumePage() {
   const [skills, setSkills] = useState<string[]>([]);
   const [savingResume, setSavingResume] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
+
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const [jobDescription, setJobDescription] = useState("");
   const [analysis, setAnalysis] = useState<JobAnalysis | null>(null);
@@ -79,6 +82,26 @@ export default function ResumePage() {
       setResumeError(err instanceof ApiError ? err.message : "Couldn't save resume.");
     } finally {
       setSavingResume(false);
+    }
+  }
+
+  async function handlePdfUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setPdfError(null);
+    setUploadingPdf(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const data = await api.postFile<Resume>("/resume/upload-pdf", formData);
+      setResumeText(data.rawText);
+      setSkills(data.skills);
+    } catch (err) {
+      setPdfError(err instanceof ApiError ? err.message : "Couldn't process this PDF.");
+    } finally {
+      setUploadingPdf(false);
+      e.target.value = "";
     }
   }
 
@@ -140,12 +163,34 @@ export default function ResumePage() {
 
         <section className="mb-12">
           <h2 className="font-display text-xl mb-3">Your resume</h2>
+
+          <div className="border border-dashed border-line rounded-md p-4 mb-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Upload a PDF</p>
+              <p className="text-xs text-ink-soft">We&apos;ll extract the text automatically.</p>
+            </div>
+            <label className="bg-accent text-white rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 cursor-pointer whitespace-nowrap">
+              {uploadingPdf ? "Processing..." : "Choose file"}
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={handlePdfUpload}
+                disabled={uploadingPdf}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {pdfError && (
+            <p className="text-warn text-sm bg-warn-soft rounded-md px-3 py-2 mb-4">{pdfError}</p>
+          )}
+
           <form onSubmit={handleSaveResume} className="space-y-3">
             <textarea
               value={resumeText}
               onChange={(e) => setResumeText(e.target.value)}
               rows={8}
-              placeholder="Paste your resume text here..."
+              placeholder="...or paste your resume text here"
               className="w-full rounded-md border border-line bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
             />
             {resumeError && (
